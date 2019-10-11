@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" type="text/css" href="css/styles.css">
+    <title>Cloud Computing Hwk 1 - Chatbot</title>
+    <script type="text/javascript" src="js/apiGateway-js-sdk/lib/axios/dist/axios.standalone.js"></script>
+    <script type="text/javascript" src="js/apiGateway-js-sdk/lib/CryptoJS/rollups/hmac-sha256.js"></script>
+    <script type="text/javascript" src="js/apiGateway-js-sdk/lib/CryptoJS/rollups/sha256.js"></script>
+    <script type="text/javascript" src="js/apiGateway-js-sdk/lib/CryptoJS/components/hmac.js"></script>
+    <script type="text/javascript" src="js/apiGateway-js-sdk/lib/CryptoJS/components/enc-base64.js"></script>
+    <script type="text/javascript" src="js/apiGateway-js-sdk/lib/url-template/url-template.js"></script>
+    <script type="text/javascript" src="js/apiGateway-js-sdk/lib/apiGatewayCore/sigV4Client.js"></script>
+    <script type="text/javascript" src="js/apiGateway-js-sdk/lib/apiGatewayCore/apiGatewayClient.js"></script>
+    <script type="text/javascript" src="js/apiGateway-js-sdk/lib/apiGatewayCore/simpleHttpClient.js"></script>
+    <script type="text/javascript" src="js/apiGateway-js-sdk/lib/apiGatewayCore/utils.js"></script>
+    <script type="text/javascript" src="js/apiGateway-js-sdk/apigClient.js"></script>
+    <script>
+        function formatDate(date) {
+            return date.getFullYear()
+                + "-" + (date.getMonth() + 1)
+                + "-" + date.getDate()
+                + " " + date.getHours()
+                + ":" + date.getMinutes()
+                + ":" + date.getSeconds();
+        }
+
+        function handleChat() {
+            const msg = document.getElementById("mymsg").value;
+            console.log(msg);
+
+            const apigClient = apigClientFactory.newClient();
+
+            const now = formatDate(new Date());
+            const body = {
+                'id': '1',
+                'text': msg,
+                'timestamp': now
+            };
+
+            let history = document.getElementById('history');
+
+            history.insertAdjacentHTML('beforeend', `
+                <li class="self">
+                    <div class="avatar"><img src="img/hungry.jpg" draggable="false"/></div>
+                    <div class="msg">
+                        <p>${msg}</p>
+                        <time>${now}</time>
+                    </div>
+                </li>
+            `);
+            history.scrollTop = history.scrollHeight;
+
+            apigClient.chatbotPost({}, body)
+                .then(response => {
+                    console.log("what result in post", response);
+                    history.insertAdjacentHTML('beforeend', `
+                        <li class="other">
+                            <div class="avatar"><img src="img/concierge.jpeg" draggable="false"/></div>
+                            <div class="msg">
+                                <p>${response.data.text}</p>
+                                <time>${response.data.timestamp}</time>
+                            </div>
+                        </li>
+                    `);
+                    history.scrollTop = history.scrollHeight;
+                })
+                .catch(result => {
+                    console.log("error in post", result);
+                });
+
+            document.getElementById("mymsg").value = "";
+
+
+        }
+    </script>
+</head>
+<body>
+    <div id="page">
+        <div class="menu">
+            <div class="back">
+                <img id="profile-photo" src="img/concierge.jpeg" draggable="false"/>
+                <div class="name">
+                    Dinner Concierge
+                </div>
+            </div>
+        </div>
+        <div id="messages">
+            <ol class="chat" id="history"></ol>
+        </div>
+        <div id="input">
+            <form id="chatinput" onsubmit="handleChat()">
+                <input id="mymsg" name="msg" class="textarea" type="text" placeholder="Type here!"/>
+            </form>
+        </div>
+    </div>
+</body>
+
+<script>
+    const form = document.getElementById('chatinput');
+    form.addEventListener('submit', logSubmit);
+
+    function logSubmit(event) {
+        event.preventDefault();
+    }
+</script>
+
+</html>
+
+

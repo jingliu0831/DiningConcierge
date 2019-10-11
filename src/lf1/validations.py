@@ -1,9 +1,9 @@
-from lf1 import utils
+import utils
 import re
 import datetime
 
 
-def validate_reservation(slots):
+def validate_reservation(slots, slot_details):
     city = utils.try_ex(lambda: slots['City'])
     cuisine = utils.try_ex(lambda: slots['Cuisine'])
     dinner_date = utils.try_ex(lambda: slots['Date'])
@@ -14,7 +14,7 @@ def validate_reservation(slots):
         return utils.build_validation_result(
             False,
             'City',
-            'We currently do not support {} as a valid city.  Can you try a different city?'.format(city)
+            'We currently only support new york. '.format(city)
         )
 
     if cuisine and not isvalid_cuisine(cuisine):
@@ -38,6 +38,16 @@ def validate_reservation(slots):
             return utils.build_validation_result(False, 'Time',
                                                  'Reservations must be scheduled at least one hour in advance. '
                                                  'Can you try a later hour?')
+    else:
+        if slot_details and 'Time' in slot_details.keys():
+            resolutions = slot_details['Time']['resolutions']
+            if len(resolutions) > 0:
+                first_resolution = resolutions[0]['value']
+                if first_resolution == "00:00":
+                    slots['Time'] = "00:00"
+                else:
+                    return utils.build_validation_result(False, 'Time',
+                                                        'Please let me know whether it is {}AM or {}PM. '.format(first_resolution, first_resolution))
 
     if phone and not isvalid_phone(phone):
         return utils.build_validation_result(False, 'Phone', 'The number you provided is invalid for a US phone. '
@@ -55,15 +65,12 @@ def in_at_least_one_hour(dinner_time):
 
 
 def isvalid_city(city):
-    valid_cities = ['new york', 'los angeles', 'chicago', 'houston', 'philadelphia', 'phoenix', 'san antonio',
-                    'san diego', 'dallas', 'san jose', 'austin', 'jacksonville', 'san francisco', 'indianapolis',
-                    'columbus', 'fort worth', 'charlotte', 'detroit', 'el paso', 'seattle', 'denver', 'washington dc',
-                    'memphis', 'boston', 'nashville', 'baltimore', 'portland']
+    valid_cities = ['new york']
     return city.lower() in valid_cities
 
 
 def isvalid_cuisine(cuisine):
-    valid_cuisines = ['chinese', 'italian', 'korean', 'japanese', 'mediterranean', 'mexican']
+    valid_cuisines = ['chinese', 'italian', 'korean', 'japanese', 'indian', 'mexican', 'french']
     return cuisine.lower() in valid_cuisines
 
 

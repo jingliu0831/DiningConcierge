@@ -1,7 +1,6 @@
 import json
-from lf1 import validations, utils, execution
+import validations, utils, execution
 import logging
-import boto3
 import uuid
 
 
@@ -45,7 +44,7 @@ def send_to_sqs(sqs, criteria):
     return response
 
 
-def suggest_restaurant(intent_request):
+def gather_criteria(intent_request, sqs):
     """
     Performs dialog management and fulfillment for booking a hotel.
 
@@ -76,26 +75,27 @@ def suggest_restaurant(intent_request):
     session_attributes['currentCriteria'] = criteria_json
 
     if intent_request['invocationSource'] == 'DialogCodeHook':
-        validation_result = validations.validate_reservation(intent_request['currentIntent']['slots'])
+        current_intent = intent_request['currentIntent']
+        slot_details = None if 'slotDetails' not in current_intent.keys() else current_intent['slotDetails']
+        validation_result = validations.validate_reservation(current_intent['slots'], slot_details)
         if not validation_result['isValid']:
-            slots = intent_request['currentIntent']['slots']
+            slots = current_intent['slots']
             slots[validation_result['violatedSlot']] = None
 
             return execution.elicit_slot(
                 session_attributes,
-                intent_request['currentIntent']['name'],
+                current_intent['name'],
                 slots,
                 validation_result['violatedSlot'],
                 validation_result['message']
             )
 
         session_attributes['currentCriteria'] = criteria_json
-        return execution.delegate(session_attributes, intent_request['currentIntent']['slots'])
+        return execution.delegate(session_attributes, current_intent['slots'])
 
     # Sending the search criteria to SQS
-    logger.debug('Searching for {} restaurants in city {}...'.format(cuisine, city))
-    sqs = boto3.client("sqs")
-    send_to_sqs(sqs, criteria) # TODO: may need to add re-try logic
+    res = send_to_sqs(sqs, criteria)
+    logger.debug("Sending result {} to queue...".format(res))
 
     utils.try_ex(lambda: session_attributes.pop('currentCriteria'))
 

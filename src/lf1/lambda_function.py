@@ -1,7 +1,9 @@
 import time
 import os
 import logging
-from lf1 import handlers
+import handlers
+import boto3
+
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
@@ -26,7 +28,8 @@ def dispatch(intent_request):
     elif intent_name == 'ThankYouIntent':
         return handlers.response_to_thank_you(intent_request)
     elif intent_name == 'DiningSuggestionsIntent':
-        return handlers.suggest_restaurant(intent_request)
+        sqs = boto3.client("sqs")
+        return handlers.gather_criteria(intent_request, sqs)
 
     raise Exception('Intent with name ' + intent_name + ' not supported')
 
