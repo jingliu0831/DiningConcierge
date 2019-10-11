@@ -1,11 +1,8 @@
-import json
 import datetime
 import time
 import os
-import dateutil.parser
 import logging
 import boto3
-import botocore
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
@@ -26,7 +23,7 @@ def lambda_handler(event, context):
     response = client.post_text(
         botName='DiningConcierge',
         botAlias='$LATEST',
-        userId='John',
+        userId=event['id'],
         sessionAttributes={},
         requestAttributes={},
         inputText=event["text"]
@@ -34,5 +31,5 @@ def lambda_handler(event, context):
 
     now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    message = {"id": "0", "text": response['message'], "timestamp": now}
+    message = {"id": event['id'], "text": response['message'], "timestamp": now}
     return message

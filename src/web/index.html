@@ -16,6 +16,19 @@
     <script type="text/javascript" src="js/apiGateway-js-sdk/lib/apiGatewayCore/utils.js"></script>
     <script type="text/javascript" src="js/apiGateway-js-sdk/apigClient.js"></script>
     <script>
+        function loadUserSession() {
+            const now = new Date();
+            const sessionToken = now.getFullYear()
+                + "-" + (now.getMonth() + 1)
+                + "-" + now.getDate()
+                + "T" + now.getHours()
+                + ":" + now.getMinutes()
+                + ":" + now.getSeconds()
+                + "." + now.getMilliseconds();
+            window.UserSession = {};
+            UserSession.token = sessionToken;
+        }
+
         function formatDate(date) {
             return date.getFullYear()
                 + "-" + (date.getMonth() + 1)
@@ -33,7 +46,7 @@
 
             const now = formatDate(new Date());
             const body = {
-                'id': '1',
+                'id': UserSession.token,
                 'text': msg,
                 'timestamp': now
             };
@@ -75,7 +88,7 @@
         }
     </script>
 </head>
-<body>
+<body onload="return loadUserSession()">
     <div id="page">
         <div class="menu">
             <div class="back">
